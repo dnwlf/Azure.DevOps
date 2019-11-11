@@ -1,0 +1,2 @@
+SYNOPSIS
+  Contains PowerShell functions for interacting with APIs in Azure DevOps, Azure DevOps Server, and Team Foundation Server
