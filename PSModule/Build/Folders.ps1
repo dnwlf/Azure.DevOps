@@ -1,4 +1,4 @@
-﻿function Add-AzureDevOpsBuildFolder()
+﻿function Add-BuildFolder()
 {
   [CmdletBinding()]
   Param(

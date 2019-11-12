@@ -1,4 +1,4 @@
-function Get-AzureDevOpsPools()
+function Get-Pools()
 {
   [CmdletBinding()]
   Param(
@@ -50,7 +50,7 @@ function Get-AzureDevOpsPools()
   Return ($Pools | Where {$_.id})
 }
 
-function Get-AzureDevOpsPoolAgent()
+function Get-PoolAgent()
 {
   [CmdletBinding()]
   Param(

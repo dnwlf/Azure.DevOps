@@ -1,4 +1,4 @@
-﻿function Get-AzureDevOpsTfvcChangesets()
+﻿function Get-TfvcChangesets()
 {
   [CmdletBinding()]
   Param(

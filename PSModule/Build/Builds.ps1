@@ -1,4 +1,4 @@
-﻿function Find-AzureDevOpsBuild()
+﻿function Find-Build()
 {
   [CmdletBinding()]
   Param(
@@ -117,7 +117,7 @@
   Return $Builds
 }
 
-function Get-AzureDevOpsBuild()
+function Get-Build()
 {
   [CmdletBinding()]
   Param(

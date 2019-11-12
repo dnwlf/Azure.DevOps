@@ -11,7 +11,7 @@
 RootModule = 'Azure.DevOps.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.1.0'
+ModuleVersion = '0.2.0'
 
 # Supported PSEditions
 CompatiblePSEditions = 'Desktop'
@@ -70,20 +70,26 @@ NestedModules = @('Build\Builds.ps1',
                   'Build\Folders.ps1',
                   'Core\Projects.ps1',
                   'DistributedTask\Pools.ps1',
+                  'Release\Releases.ps1',
                   'Tfvc\Changesets.ps1')
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
-FunctionsToExport = @('Get-AzureDevOpsTfvcChangesets',
-                      'Get-AzureDevOpsProjects',
-                      'Find-AzureDevOpsBuild',
-                      'Find-AzureDevOpsBuildDefinition',
-                      'Get-AzureDevOpsBuild',
-                      'Get-AzureDevOpsBuildDefinition',
-                      'Update-AzureDevOpsBuildDefinition',
-                      'Add-AzureDevOpsBuildFolder',
-                      'Get-AzureDevOpsPools',
-                      'Get-AzureDevOpsPoolAgent',
-                      'Set-AuthorizationHeader')
+FunctionsToExport = @('Add-BuildFolder',
+                      'Find-Build',
+                      'Find-BuildDefinition',
+                      'Find-Release',
+                      'Get-Build',
+                      'Get-BuildDefinition',
+                      'Get-Pools',
+                      'Get-PoolAgent',
+                      'Get-Projects',
+                      'Get-Release',
+                      'Get-TfvcChangesets',
+                      'Set-AuthorizationHeader',
+                      'Update-BuildDefinition',
+                      'Update-Release',
+                      'Update-ReleaseEnvironment',
+                      'Update-ReleaseResources')
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
 # CmdletsToExport = @()
@@ -108,6 +114,7 @@ FunctionsToExport = @('Get-AzureDevOpsTfvcChangesets',
               'Build\Folders.ps1',
               'Core\Projects.ps1',
               'DistributedTask\Pools.ps1',
+              'Release\Releases.ps1',
               'Tfvc\Changesets.ps1')
 
   # Private data to pass to the module specified in RootModule/ModuleToProcess. This may also contain a PSData hashtable with additional module metadata used by PowerShell.
@@ -141,6 +148,6 @@ FunctionsToExport = @('Get-AzureDevOpsTfvcChangesets',
 # HelpInfoURI = ''
 
 # Default prefix for commands exported from this module. Override the default prefix using Import-Module -Prefix.
-# DefaultCommandPrefix = ''
+DefaultCommandPrefix = 'AzureDevOps'
 
 }

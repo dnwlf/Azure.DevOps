@@ -1,4 +1,4 @@
-﻿function Get-AzureDevOpsProjects()
+﻿function Get-Projects()
 {
   [CmdletBinding()]
   Param(

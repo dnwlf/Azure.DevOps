@@ -1,4 +1,4 @@
-﻿function Find-AzureDevOpsBuildDefinition()
+﻿function Find-BuildDefinition()
 {
   [CmdletBinding()]
   Param(
@@ -108,7 +108,7 @@
   Return $Definitions
 }
 
-function Get-AzureDevOpsBuildDefinition()
+function Get-BuildDefinition()
 {
   [CmdletBinding()]
   Param(
@@ -172,7 +172,7 @@ function Get-AzureDevOpsBuildDefinition()
   Return $Definition
 }
 
-function Set-AzureDevOpsBuildDefinition()
+function Update-BuildDefinition()
 {
   [CmdletBinding()]
   Param(
