@@ -11,7 +11,7 @@
 RootModule = 'Azure.DevOps.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.2.0'
+ModuleVersion = '0.2.2'
 
 # Supported PSEditions
 CompatiblePSEditions = 'Desktop'
@@ -70,6 +70,7 @@ NestedModules = @('Build\Builds.ps1',
                   'Build\Folders.ps1',
                   'Core\Projects.ps1',
                   'DistributedTask\Pools.ps1',
+                  'Release\Definitions.ps1',
                   'Release\Releases.ps1',
                   'Tfvc\Changesets.ps1')
 
@@ -78,6 +79,7 @@ FunctionsToExport = @('Add-BuildFolder',
                       'Find-Build',
                       'Find-BuildDefinition',
                       'Find-Release',
+                      'Find-ReleaseDefinition',
                       'Get-Build',
                       'Get-BuildDefinition',
                       'Get-Pools',
@@ -114,6 +116,7 @@ FunctionsToExport = @('Add-BuildFolder',
               'Build\Folders.ps1',
               'Core\Projects.ps1',
               'DistributedTask\Pools.ps1',
+              'Release\Definitions.ps1',
               'Release\Releases.ps1',
               'Tfvc\Changesets.ps1')
 
