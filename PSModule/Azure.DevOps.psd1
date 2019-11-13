@@ -126,10 +126,10 @@ FunctionsToExport = @('Add-BuildFolder',
       Tags = @('AzureDevOps','AzureDevOpsServer','TFS','DevOps','REST')
 
       # A URL to the license for this module.
-      # LicenseUri = ''
+      LicenseUri = 'https://github.com/dnwlf/Azure.DevOps'
 
       # A URL to the main website for this project.
-      # ProjectUri = ''
+      ProjectUri = 'https://github.com/dnwlf/Azure.DevOps'
 
       # A URL to an icon representing this module.
       # IconUri = ''
@@ -145,7 +145,7 @@ FunctionsToExport = @('Add-BuildFolder',
   } # End of PrivateData hashtable
 
 # HelpInfo URI of this module
-# HelpInfoURI = ''
+HelpInfoURI = 'https://github.com/dnwlf/Azure.DevOps'
 
 # Default prefix for commands exported from this module. Override the default prefix using Import-Module -Prefix.
 DefaultCommandPrefix = 'AzureDevOps'
