@@ -11,7 +11,7 @@
 RootModule = 'Azure.DevOps.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.3.2'
+ModuleVersion = '0.3.3'
 
 # Supported PSEditions
 CompatiblePSEditions = 'Desktop'
@@ -81,12 +81,15 @@ FunctionsToExport = @('Add-BuildFolder',
                       'Find-Release',
                       'Find-ReleaseDefinition',
                       'Get-Build',
+                      'Get-BuildLog',
+                      'Get-BuildLogs',
                       'Get-BuildDefinition',
                       'Get-Pools',
                       'Get-PoolAgent',
                       'Get-Projects',
                       'Get-Release',
                       'Get-TfvcChangesets',
+                      'Remove-Build',
                       'Set-AuthorizationHeader',
                       'Update-BuildDefinition',
                       'Update-Release',
