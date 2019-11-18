@@ -20,6 +20,8 @@
 
     [switch]$UseDefaultCredentials,
 
+    [int[]]$Definitions,
+
     [int[]]$Queues,
 
     [string]$BuildNumber,
@@ -82,6 +84,7 @@
 
     [string]$Uri = "{0}/{1}/{2}/_apis/build/builds?api-version=5.0" -f $Url,$Collection,$Project
     
+    if($Definitions)            {$Uri += "&definitions=$Definitions"}
     if($Queues)                 {$Uri += "&queues=$Queues"}
     if($BuildNumber)            {$Uri += "&buildNumber=$BuildNumber"}
     if($MinTime)                {$Uri += "&minTime=$MinTime"}
