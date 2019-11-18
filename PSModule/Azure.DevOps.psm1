@@ -21,3 +21,23 @@
 
   Return [psobject]$Headers
 }
+
+function Set-AcceptHeader()
+{
+  [OutputType([psobject])]
+  [CmdletBinding()]
+  Param(
+    [ValidateNotNullOrEmpty()]
+    [Parameter(Mandatory=$true)]
+    [ValidateSet('application/zip', 'application/json','text/plain')]
+    [string]$AcceptType,
+    [psobject]$Headers = @{}
+  )
+
+  if($AcceptType)
+  {
+    $Headers.Accept = $AcceptType
+  }
+
+  Return [psobject]$Headers
+}

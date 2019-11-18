@@ -168,3 +168,207 @@ function Get-Build()
 
   Return $Results
 }
+
+function Get-BuildLogs()
+{
+  [CmdletBinding()]
+  Param(
+    [ValidateNotNullOrEmpty()]
+    [Parameter(Mandatory=$true)]
+    [string]$Url,
+
+    [ValidateNotNullOrEmpty()]
+    [Parameter(Mandatory=$true)]
+    [string]$Collection,
+
+    [ValidateNotNullOrEmpty()]
+    [Parameter(Mandatory=$true)]
+    [string]$Project,
+
+    [ValidateNotNullOrEmpty()]
+    [ValidateSet('application/zip', 'application/json')]
+    [string]$AcceptType = 'application/json',
+
+    [ValidateNotNullOrEmpty()]
+    [string]$OutFile,
+
+    [psobject]$Headers = @{},
+
+    [string]$PAT,
+
+    [switch]$UseDefaultCredentials,
+
+    [Parameter(Mandatory=$true,ValueFromPipelineByPropertyName=$true,ValueFromPipeline=$true)]
+    [ValidateNotNullOrEmpty()]
+    [Alias('id')]
+    [int]$BuildId
+  )
+
+  Write-Debug ("Url: {0}" -f $Url)
+  Write-Debug ("Collection: {0}" -f $Collection)
+  Write-Debug ("Project: {0}" -f $Project)
+  Write-Debug ("AcceptType: {0}" -f $AcceptType)
+  Write-Debug ("Headers Length: {0}" -f $Headers.Length)
+  Write-Debug ("PAT Length: {0}" -f $PAT.Length)
+  Write-Debug ("UseDefaultCredentials: {0}" -f $UseDefaultCredentials)
+
+  [psobject]$Headers = Set-AuthorizationHeader -Password $PAT -Headers $Headers
+  $Headers = Set-AcceptHeader -AcceptType $AcceptType -Headers $Headers
+
+  [psobject[]]$Results = @()
+
+  [string]$Uri = "{0}/{1}/{2}/_apis/build/builds/{3}/logs?api-version=5.0" -f $Url,$Collection,$Project,$BuildId
+  
+  Write-Verbose ("Uri: {0}" -f $Uri)
+
+  $IrmParameters = @{
+    Uri = $Uri
+    Method = "Get"
+    Headers = $Headers
+    UseDefaultCredentials = $UseDefaultCredentials
+  }
+
+  if($OutFile)
+  {
+    $IrmParameters += @{
+      OutFile = $OutFile
+    }
+  }
+
+  $Results = Invoke-RestMethod @IrmParameters
+
+  Return $Results
+}
+
+function Get-BuildLog()
+{
+  [CmdletBinding()]
+  Param(
+    [ValidateNotNullOrEmpty()]
+    [Parameter(Mandatory=$true)]
+    [string]$Url,
+
+    [ValidateNotNullOrEmpty()]
+    [Parameter(Mandatory=$true)]
+    [string]$Collection,
+
+    [ValidateNotNullOrEmpty()]
+    [Parameter(Mandatory=$true)]
+    [string]$Project,
+
+    [ValidateNotNullOrEmpty()]
+    [Parameter(Mandatory=$true)]
+    [ValidateSet('application/zip', 'application/json','text/plain')]
+    [string]$AcceptType = 'application/json',
+
+    [ValidateNotNullOrEmpty()]
+    [string]$OutFile,
+
+    [psobject]$Headers = @{},
+
+    [string]$PAT,
+
+    [switch]$UseDefaultCredentials,
+
+    [Parameter(Mandatory=$true,ValueFromPipelineByPropertyName=$true,ValueFromPipeline=$true)]
+    [ValidateNotNullOrEmpty()]
+    [Alias('id')]
+    [int]$BuildId,
+
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
+    [int]$LogId,
+
+    [int]$StartLine,
+
+    [int]$EndLine
+  )
+
+  Write-Debug ("Url: {0}" -f $Url)
+  Write-Debug ("Collection: {0}" -f $Collection)
+  Write-Debug ("Project: {0}" -f $Project)
+  Write-Debug ("AcceptType: {0}" -f $AcceptType)
+  Write-Debug ("Headers Length: {0}" -f $Headers.Length)
+  Write-Debug ("PAT Length: {0}" -f $PAT.Length)
+  Write-Debug ("UseDefaultCredentials: {0}" -f $UseDefaultCredentials)
+
+  [psobject]$Headers = Set-AuthorizationHeader -Password $PAT -Headers $Headers
+  $Headers = Set-AcceptHeader -AcceptType $AcceptType -Headers $Headers
+
+  [psobject[]]$Results = @()
+
+  [string]$Uri = "{0}/{1}/{2}/_apis/build/builds/{3}/logs/{4}?api-version=5.0" -f $Url,$Collection,$Project,$BuildId,$LogId
+  
+  if($StartLine) {$Uri += "&startLine={0}" -f $StartLine}
+  if($EndLine)   {$Uri += "&endLine={0}" -f $EndLine}
+
+  Write-Verbose ("Uri: {0}" -f $Uri)
+
+  $IrmParameters = @{
+    Uri = $Uri
+    Method = "Get"
+    Headers = $Headers
+    UseDefaultCredentials = $UseDefaultCredentials
+  }
+
+  if($OutFile)
+  {
+    $IrmParameters += @{
+      OutFile = $OutFile
+    }
+  }
+
+  Write-Host @IrmParameters
+
+  $Results = Invoke-RestMethod @IrmParameters
+
+  Return $Results
+}
+
+function Remove-Build()
+{
+  [CmdletBinding()]
+  Param(
+    [ValidateNotNullOrEmpty()]
+    [Parameter(Mandatory=$true)]
+    [string]$Url,
+
+    [ValidateNotNullOrEmpty()]
+    [Parameter(Mandatory=$true)]
+    [string]$Collection,
+
+    [ValidateNotNullOrEmpty()]
+    [Parameter(Mandatory=$true)]
+    [string]$Project,
+
+    [psobject]$Headers = @{},
+
+    [string]$PAT,
+
+    [switch]$UseDefaultCredentials,
+
+    [Parameter(Mandatory=$true,ValueFromPipelineByPropertyName=$true,ValueFromPipeline=$true)]
+    [ValidateNotNullOrEmpty()]
+    [Alias('id')]
+    [int]$BuildId
+  )
+
+  Write-Debug ("Url: {0}" -f $Url)
+  Write-Debug ("Collection: {0}" -f $Collection)
+  Write-Debug ("Project: {0}" -f $Project)
+  Write-Debug ("Headers Length: {0}" -f $Headers.Length)
+  Write-Debug ("PAT Length: {0}" -f $PAT.Length)
+  Write-Debug ("UseDefaultCredentials: {0}" -f $UseDefaultCredentials)
+
+  [psobject]$Headers = Set-AuthorizationHeader -Password $PAT -Headers $Headers
+
+  [psobject[]]$Results = @()
+
+  [string]$Uri = "{0}/{1}/{2}/_apis/build/builds/{3}?api-version=5.0" -f $Url,$Collection,$Project,$BuildId
+  
+  Write-Verbose ("Uri: {0}" -f $Uri)
+
+  $Results = Invoke-RestMethod -Uri $Uri -Method Delete -Headers $Headers -UseDefaultCredentials:$UseDefaultCredentials -UseBasicParsing
+
+  Return $Results
+}
