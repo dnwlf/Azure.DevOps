@@ -1,43 +1,50 @@
-﻿function Set-AuthorizationHeader()
+﻿function Set-ConnectionInfo()
 {
-  [OutputType([psobject])]
-  [CmdletBinding()]
-  Param(
-    [string]$Username,
-    [string]$Password,
-    [psobject]$Headers = @{}
-  )
-
-  if($Password)
-  {
-    # Username isn't required for PAT
-    if(-not $Username){$Username = "user"}
-    
-    [byte[]]$Bytes = [System.Text.Encoding]::UTF8.GetBytes("${Username}:${Password}")
-    [string]$Base64 = "Basic {0}" -f [System.Convert]::ToBase64String($Bytes)
-
-    $Headers.Authorization = $Base64
-  }
-
-  Return [psobject]$Headers
-}
-
-function Set-AcceptHeader()
-{
-  [OutputType([psobject])]
   [CmdletBinding()]
   Param(
     [ValidateNotNullOrEmpty()]
     [Parameter(Mandatory=$true)]
-    [ValidateSet('application/zip', 'application/json','text/plain')]
-    [string]$AcceptType,
-    [psobject]$Headers = @{}
+    [string]$BaseUrl,
+
+    [ValidateNotNullOrEmpty()]
+    [string]$Collection,
+
+    [ValidateNotNullOrEmpty()]
+    [string]$Project,
+
+    [ValidateNotNullOrEmpty()]
+    [Parameter(Mandatory=$true)]
+    [string]$Token
   )
 
-  if($AcceptType)
-  {
-    $Headers.Accept = $AcceptType
-  }
+  Write-Debug ("BaseUrl: {0}" -f $BaseUrl)
+  Write-Debug ("Collection: {0}" -f $Collection)
+  Write-Debug ("Project: {0}" -f $Project)
+  Write-Debug ("Token Length: {0}" -f $Token.Length)
+  
+  [byte[]]$Bytes = [System.Text.Encoding]::UTF8.GetBytes("user:${Token}")
 
-  Return [psobject]$Headers
+  [psobject]$script:AzDOConnectionInfo = @{
+    BaseUrl = $BaseUrl
+    Collection = $Collection
+    Project = $Project
+    Headers = @{Authorization = "Basic {0}" -f [System.Convert]::ToBase64String($Bytes)}
+  }
+}
+
+function Get-ConnectionInfo()
+{
+  if(-not $script:AzDOConnectionInfo)
+  {
+    Throw "Azure DevOps connection info not set. Please run the Set-AzureDevOpsConnectionInfo function to set up connection info."
+  }
+  else
+  {
+    Return $script:AzDOConnectionInfo
+  }
+}
+
+function Clear-ConnectionInfo()
+{
+  [psobject]$script:AzDOConnectionInfo = @{}
 }

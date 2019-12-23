@@ -2,24 +2,6 @@
 {
   [CmdletBinding()]
   Param(
-    [ValidateNotNullOrEmpty()]
-    [Parameter(Mandatory=$true)]
-    [string]$Url,
-
-    [ValidateNotNullOrEmpty()]
-    [Parameter(Mandatory=$true)]
-    [string]$Collection,
-
-    [ValidateNotNullOrEmpty()]
-    [Parameter(Mandatory=$true)]
-    [string]$Project,
-
-    [psobject]$Headers = @{},
-
-    [string]$PAT,
-
-    [switch]$UseDefaultCredentials,
-
     [string]$Name,
 
     [string]$RepositoryId,
@@ -57,23 +39,33 @@
     [string]$YamlFilename
   )
 
-  Write-Debug ("Url: {0}" -f $Url)
-  Write-Debug ("Collection: {0}" -f $Collection)
-  Write-Debug ("Project: {0}" -f $Project)
-  Write-Debug ("Headers Length: {0}" -f $Headers.Length)
-  Write-Debug ("PAT Length: {0}" -f $PAT.Length)
-  Write-Debug ("UseDefaultCredentials: {0}" -f $UseDefaultCredentials)
+  Write-Debug ("Name: {0}" -f $Name)
+  Write-Debug ("RepositoryId: {0}" -f $RepositoryId)
+  Write-Debug ("RepositoryType: {0}" -f $RepositoryType)
+  Write-Debug ("QueryOrder: {0}" -f $QueryOrder)
+  Write-Debug ("RequestedFor: {0}" -f $RequestedFor)
+  Write-Debug ("Top: {0}" -f $Top)
+  Write-Debug ("MinMetricsTime: {0}" -f $MinMetricsTime)
+  Write-Debug ("DefinitionIds: {0}" -f ($DefinitionIds -join ","))
+  Write-Debug ("Path: {0}" -f $Path)
+  Write-Debug ("BuiltAfter: {0}" -f $BuiltAfter)
+  Write-Debug ("NotBuiltAfter: {0}" -f $NotBuiltAfter)
+  Write-Debug ("IncludeAllProperties: {0}" -f $IncludeAllProperties)
+  Write-Debug ("IncludeLatestBuilds: {0}" -f $IncludeLatestBuilds)
+  Write-Debug ("TaskIdFilter: {0}" -f $TaskIdFilter)
+  Write-Debug ("ProcessType: {0}" -f $ProcessType)
+  Write-Debug ("YamlFilename: {0}" -f $YamlFilename)
+
+  [psobject]$AzDO = Get-ConnectionInfo
 
   [psobject[]]$Definitions = @{}
   [string]$ContinuationToken = ""
-
-  [psobject]$Headers = Set-AuthorizationHeader -Password $PAT -Headers $Headers
 
   do
   {
     [psobject[]]$Results = @()
 
-    [string]$Uri = "{0}/{1}/{2}/_apis/build/definitions?api-version=5.0" -f $Url,$Collection,$Project
+    [string]$Uri = "{0}/{1}/{2}/_apis/build/definitions?api-version=5.0" -f $AzDO.BaseUrl,$AzDO.Collection,$AzDO.Project
     
     if($Name)                 {$Uri += "&name=$Name"}
     if($RepositoryId)         {$Uri += "&repositoryId=$RepositoryId"}
@@ -99,7 +91,7 @@
     
     Write-Verbose ("Uri: {0}" -f $Uri)
 
-    $Results = Invoke-WebRequest -Uri $Uri -Headers $Headers -UseDefaultCredentials:$UseDefaultCredentials -UseBasicParsing
+    $Results = Invoke-WebRequest -Uri $Uri -Headers $AzDO.Headers -UseBasicParsing
     $ContinuationToken = $Results.Headers.'x-ms-continuationtoken'
     $Definitions += ($Results.Content | ConvertFrom-Json).value
 
@@ -112,24 +104,6 @@ function Get-BuildDefinition()
 {
   [CmdletBinding()]
   Param(
-    [ValidateNotNullOrEmpty()]
-    [Parameter(Mandatory=$true)]
-    [string]$Url,
-
-    [ValidateNotNullOrEmpty()]
-    [Parameter(Mandatory=$true)]
-    [string]$Collection,
-
-    [ValidateNotNullOrEmpty()]
-    [Parameter(Mandatory=$true)]
-    [string]$Project,
-
-    [psobject]$Headers = @{},
-
-    [string]$PAT,
-
-    [switch]$UseDefaultCredentials,
-
     [ValidateNotNullOrEmpty()]
     [Parameter(Mandatory=$true)]
     [Alias('id')]
@@ -145,19 +119,17 @@ function Get-BuildDefinition()
     [bool]$IncludeLatestBuilds
   )
 
-  Write-Debug ("Url: {0}" -f $Url)
-  Write-Debug ("Collection: {0}" -f $Collection)
-  Write-Debug ("Project: {0}" -f $Project)
-  Write-Debug ("Headers Length: {0}" -f $Headers.Length)
-  Write-Debug ("PAT Length: {0}" -f $PAT.Length)
-  Write-Debug ("UseDefaultCredentials: {0}" -f $UseDefaultCredentials)
+  Write-Debug ("DefinitionId: {0}" -f $DefinitionId)
+  Write-Debug ("Revision: {0}" -f $Revision)
+  Write-Debug ("MinMetricsTime: {0}" -f $MinMetricsTime)
+  Write-Debug ("PropertyFilters: {0}" -f $PropertyFilters)
+  Write-Debug ("IncludeLatestBuilds: {0}" -f $IncludeLatestBuilds)
+
+  [psobject]$AzDO = Get-ConnectionInfo
 
   [psobject]$Definition = @{}
-  [string]$ContinuationToken = ""
 
-  [psobject]$Headers = Set-AuthorizationHeader -Password $PAT -Headers $Headers
-
-  [string]$Uri = "{0}/{1}/{2}/_apis/build/definitions/{3}?api-version=5.0" -f $Url,$Collection,$Project,$DefinitionId
+  [string]$Uri = "{0}/{1}/{2}/_apis/build/definitions/{3}?api-version=5.0" -f $AzDO.BaseUrl,$AzDO.Collection,$AzDO.Project,$DefinitionId
     
   if($Revision)             {$Uri += "&revision=$Revision"}
   if($MinMetricsTime)       {$Uri += "&minMetricsTime=$MinMetricsTime"}
@@ -166,8 +138,7 @@ function Get-BuildDefinition()
 
   Write-Verbose ("Uri: {0}" -f $Uri)
 
-  $Results = Invoke-WebRequest -Uri $Uri -Headers $Headers -UseDefaultCredentials:$UseDefaultCredentials -UseBasicParsing
-  $Definition = ($Results.Content | ConvertFrom-Json)
+  $Definition = Invoke-RestMethod -Uri $Uri -Headers $AzDO.Headers -UseBasicParsing
 
   Return $Definition
 }
@@ -178,29 +149,12 @@ function Update-BuildDefinition()
   Param(
     [ValidateNotNullOrEmpty()]
     [Parameter(Mandatory=$true)]
-    [string]$Url,
-
-    [ValidateNotNullOrEmpty()]
-    [Parameter(Mandatory=$true)]
-    [string]$Collection,
-
-    [ValidateNotNullOrEmpty()]
-    [Parameter(Mandatory=$true)]
-    [string]$Project,
-
-    [psobject]$Headers = @{},
-
-    [string]$PAT,
-
-    [switch]$UseDefaultCredentials,
-
-    [ValidateNotNullOrEmpty()]
-    [Parameter(Mandatory=$true)]
     [Alias('id')]
     [int]$DefinitionId,
 
     [ValidateNotNullOrEmpty()]
     [Parameter(Mandatory=$true)]
+    [ValidateScript({ConvertTo-Json $_})]
     [psobject]$Definition,
 
     [int]$secretsSourceDefinitionId,
@@ -208,26 +162,23 @@ function Update-BuildDefinition()
     [int]$secretsSourceDefinitionRevision
   )
 
-  Write-Debug ("Url: {0}" -f $Url)
-  Write-Debug ("Collection: {0}" -f $Collection)
-  Write-Debug ("Project: {0}" -f $Project)
-  Write-Debug ("Headers Length: {0}" -f $Headers.Length)
-  Write-Debug ("PAT Length: {0}" -f $PAT.Length)
-  Write-Debug ("UseDefaultCredentials: {0}" -f $UseDefaultCredentials)
+  [string]$Body = $Definition | ConvertTo-Json -Depth 100
 
-  [psobject]$Headers = Set-AuthorizationHeader -Password $PAT -Headers $Headers
+  Write-Debug ("DefinitionId: {0}" -f $DefinitionId)
+  Write-Debug ("Body: {0}" -f $Body)
+  Write-Debug ("secretsSourceDefinitionId: {0}" -f $secretsSourceDefinitionId)
+  Write-Debug ("secretsSourceDefinitionRevision: {0}" -f $secretsSourceDefinitionRevision)
 
-  [string]$Uri = "{0}/{1}/{2}/_apis/build/definitions/{3}?api-version=5.0" -f $Url,$Collection,$Project,$DefinitionId
+  [psobject]$AzDO = Get-ConnectionInfo
+
+  [string]$Uri = "{0}/{1}/{2}/_apis/build/definitions/{3}?api-version=5.0" -f $AzDO.BaseUrl,$AzDO.Collection,$AzDO.Project,$DefinitionId
     
   if($SecretsSourceDefinitionId)       {$Uri += "&secretsSourceDefinitionId=$SecretsSourceDefinitionId"}
   if($SecretsSourceDefinitionRevision) {$Uri += "&secretsSourceDefinitionRevision=$SecretsSourceDefinitionRevision"}
 
-  [string]$Body = $Definition | ConvertTo-Json -Depth 100
-
   Write-Verbose ("Uri: {0}" -f $Uri)
-  Write-Verbose ("Body: {0}" -f $Body)
 
-  $Results = Invoke-RestMethod -Uri $Uri -Headers $Headers -Method PUT -ContentType "application/json" -Body ([System.Text.Encoding]::UTF8.GetBytes($Body)) -UseDefaultCredentials:$UseDefaultCredentials -UseBasicParsing
+  $Results = Invoke-RestMethod -Uri $Uri -Headers $AzDO.Headers -Method PUT -ContentType "application/json" -Body ([System.Text.Encoding]::UTF8.GetBytes($Body)) -UseBasicParsing
 
   Return $Results
 }

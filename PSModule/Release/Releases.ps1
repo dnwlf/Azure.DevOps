@@ -2,24 +2,6 @@
 {
   [CmdletBinding()]
   Param(
-    [ValidateNotNullOrEmpty()]
-    [Parameter(Mandatory=$true)]
-    [string]$Url,
-
-    [ValidateNotNullOrEmpty()]
-    [Parameter(Mandatory=$true)]
-    [string]$Collection,
-
-    [ValidateNotNullOrEmpty()]
-    [Parameter(Mandatory=$true)]
-    [string]$Project,
-
-    [psobject]$Headers = @{},
-
-    [string]$PAT,
-
-    [switch]$UseDefaultCredentials,
-
     [Alias('id')]
     [int]$DefinitionId,
 
@@ -68,23 +50,37 @@
     [string]$Path
   )
 
-  Write-Debug ("Url: {0}" -f $Url)
-  Write-Debug ("Collection: {0}" -f $Collection)
-  Write-Debug ("Project: {0}" -f $Project)
-  Write-Debug ("Headers Length: {0}" -f $Headers.Length)
-  Write-Debug ("PAT Length: {0}" -f $PAT.Length)
-  Write-Debug ("UseDefaultCredentials: {0}" -f $UseDefaultCredentials)
+  Write-Debug ("DefinitionId: {0}" -f $DefinitionId)
+  Write-Debug ("DefinitionEnvironmentId: {0}" -f $DefinitionEnvironmentId)
+  Write-Debug ("SearchText: {0}" -f $SearchText)
+  Write-Debug ("CreatedBy: {0}" -f $CreatedBy)
+  Write-Debug ("StatusFilter: {0}" -f ($StatusFilter -join ","))
+  Write-Debug ("EnvironmentStatusFilter: {0}" -f $EnvironmentStatusFilter)
+  Write-Debug ("MinCreatedTime: {0}" -f $MinCreatedTime)
+  Write-Debug ("MaxCreatedTime: {0}" -f $MaxCreatedTime)
+  Write-Debug ("QueryOrder: {0}" -f $QueryOrder)
+  Write-Debug ("Top: {0}" -f $Top)
+  Write-Debug ("Expand: {0}" -f ($Expand -join ","))
+  Write-Debug ("ArtifactTypeId: {0}" -f $ArtifactTypeId)
+  Write-Debug ("SourceId: {0}" -f $SourceId)
+  Write-Debug ("ArtifactVersionId: {0}" -f $ArtifactVersionId)
+  Write-Debug ("SourceBranchFilter: {0}" -f $SourceBranchFilter)
+  Write-Debug ("IsDeleted: {0}" -f $IsDeleted)
+  Write-Debug ("TagFilter: {0}" -f ($TagFilter -join ","))
+  Write-Debug ("PropertyFilters: {0}" -f ($PropertyFilters -join ","))
+  Write-Debug ("ReleaseIdFilter: {0}" -f ($ReleaseIdFilter -join ","))
+  Write-Debug ("Path: {0}" -f $Path)
+
+  [psobject]$AzDO = Get-ConnectionInfo
 
   [psobject[]]$Releases = @{}
   [string]$ContinuationToken = ""
-
-  [psobject]$Headers = Set-AuthorizationHeader -Password $PAT -Headers $Headers
 
   do
   {
     [psobject[]]$Results = @()
 
-    [string]$Uri = "{0}/{1}/{2}/_apis/release/releases?api-version=5.0" -f $Url,$Collection,$Project
+    [string]$Uri = "{0}/{1}/{2}/_apis/release/releases?api-version=5.0" -f $AzDO.BaseUrl,$AzDO.Collection,$AzDO.Project
 
     if($DefinitionId)            {$Uri += "&definitionId=$DefinitionId"}
     if($DefinitionEnvironmentId) {$Uri += "&definitionEnvironmentId=$DefinitionEnvironmentId"}
@@ -114,7 +110,7 @@
     
     Write-Verbose ("Uri: {0}" -f $Uri)
 
-    $Results = Invoke-WebRequest -Uri $Uri -Headers $Headers -UseDefaultCredentials:$UseDefaultCredentials -UseBasicParsing
+    $Results = Invoke-WebRequest -Uri $Uri -Headers $AzDO.Headers -UseBasicParsing
     $ContinuationToken = $Results.Headers.'x-ms-continuationtoken'
     $Releases += ($Results.Content | ConvertFrom-Json).value
 
@@ -127,24 +123,6 @@ function Get-Release()
 {
   [CmdletBinding()]
   Param(
-    [ValidateNotNullOrEmpty()]
-    [Parameter(Mandatory=$true)]
-    [string]$Url,
-
-    [ValidateNotNullOrEmpty()]
-    [Parameter(Mandatory=$true)]
-    [string]$Collection,
-
-    [ValidateNotNullOrEmpty()]
-    [Parameter(Mandatory=$true)]
-    [string]$Project,
-
-    [psobject]$Headers = @{},
-
-    [string]$PAT,
-
-    [switch]$UseDefaultCredentials,
-
     [Alias('id')]
     [int]$ReleaseId,
 
@@ -159,29 +137,28 @@ function Get-Release()
     [int]$TopGateRecords
   )
 
-  Write-Debug ("Url: {0}" -f $Url)
-  Write-Debug ("Collection: {0}" -f $Collection)
-  Write-Debug ("Project: {0}" -f $Project)
-  Write-Debug ("Headers Length: {0}" -f $Headers.Length)
-  Write-Debug ("PAT Length: {0}" -f $PAT.Length)
-  Write-Debug ("UseDefaultCredentials: {0}" -f $UseDefaultCredentials)
+  Write-Debug ("ReleaseId: {0}" -f $ReleaseId)
+  Write-Debug ("ApprovalFilters: {0}" -f ($ApprovalFilters -join ","))
+  Write-Debug ("PropertyFilters: {0}" -f ($PropertyFilters -join ","))
+  Write-Debug ("Expand: {0}" -f ($Expand -join ","))
+  Write-Debug ("TopGateRecords: {0}" -f $TopGateRecords)
+
+  [psobject]$AzDO = Get-ConnectionInfo
 
   [psobject[]]$Releases = @{}
 
-  [psobject]$Headers = Set-AuthorizationHeader -Password $PAT -Headers $Headers
-
   [psobject[]]$Results = @()
 
-  [string]$Uri = "{0}/{1}/{2}/_apis/release/releases/{3}?api-version=5.0" -f $Url,$Collection,$Project,$ReleaseId
+  [string]$Uri = "{0}/{1}/{2}/_apis/release/releases/{3}?api-version=5.0" -f $AzDO.BaseUrl,$AzDO.Collection,$AzDO.Project,$ReleaseId
 
-  if($ApprovalFilters) {$Uri += "&approvalFilters=$ApprovalFilters"}
+  if($ApprovalFilters)  {$Uri += "&approvalFilters=$ApprovalFilters"}
   if($pPropertyFilters) {$Uri += "&propertyFilters=$PropertyFilters"}
-  if($Expand)          {$Uri += "&`$expand={0}" -f ($Expand -join ",")}
-  if($TopGateRecords)  {$Uri += "&topGateRecords=$TopGateRecords"}
+  if($Expand)           {$Uri += "&`$expand={0}" -f ($Expand -join ",")}
+  if($TopGateRecords)   {$Uri += "&topGateRecords=$TopGateRecords"}
 
   Write-Verbose ("Uri: {0}" -f $Uri)
 
-  $Results = Invoke-RestMethod -Uri $Uri -Headers $Headers -UseDefaultCredentials:$UseDefaultCredentials -UseBasicParsing
+  $Results = Invoke-RestMethod -Uri $Uri -Headers $AzDO.Headers -UseBasicParsing
 
   Return $Results
 }
@@ -192,24 +169,6 @@ function Update-Release()
   Param(
     [ValidateNotNullOrEmpty()]
     [Parameter(Mandatory=$true)]
-    [string]$Url,
-
-    [ValidateNotNullOrEmpty()]
-    [Parameter(Mandatory=$true)]
-    [string]$Collection,
-
-    [ValidateNotNullOrEmpty()]
-    [Parameter(Mandatory=$true)]
-    [string]$Project,
-
-    [psobject]$Headers = @{},
-
-    [string]$PAT,
-
-    [switch]$UseDefaultCredentials,
-
-    [ValidateNotNullOrEmpty()]
-    [Parameter(Mandatory=$true)]
     [int]$ReleaseId,
 
     [ValidateNotNullOrEmpty()]
@@ -218,23 +177,18 @@ function Update-Release()
     [string]$Body
   )
 
-  Write-Debug ("Url: {0}" -f $Url)
-  Write-Debug ("Collection: {0}" -f $Collection)
-  Write-Debug ("Project: {0}" -f $Project)
-  Write-Debug ("Headers Length: {0}" -f $Headers.Length)
-  Write-Debug ("PAT Length: {0}" -f $PAT.Length)
-  Write-Debug ("UseDefaultCredentials: {0}" -f $UseDefaultCredentials)
+  Write-Debug ("ReleaseId: {0}" -f $ReleaseId)
+  Write-Debug ("Body: {0}" -f $Body)
 
-  [psobject]$Headers = Set-AuthorizationHeader -Password $PAT -Headers $Headers
+  [psobject]$AzDO = Get-ConnectionInfo
 
   [psobject[]]$Results = @()
 
-  [string]$Uri = "{0}/{1}/{2}/_apis/release/releases/{3}?api-version=5.0-preview" -f $Url,$Collection,$Project,$ReleaseId
+  [string]$Uri = "{0}/{1}/{2}/_apis/release/releases/{3}?api-version=5.0-preview" -f $AzDO.BaseUrl,$AzDO.Collection,$AzDO.Project,$ReleaseId
 
   Write-Verbose ("Uri: {0}" -f $Uri)
-  Write-Verbose ("Body: {0}" -f $Body)
   
-  $Results = Invoke-RestMethod -Uri $Uri -Headers $Headers -Method PUT -ContentType "application/json" -Body ([System.Text.Encoding]::UTF8.GetBytes($Body)) -UseDefaultCredentials:$UseDefaultCredentials -UseBasicParsing
+  $Results = Invoke-RestMethod -Uri $Uri -Headers $AzDO.Headers -Method PUT -ContentType "application/json" -Body ([System.Text.Encoding]::UTF8.GetBytes($Body)) -UseBasicParsing
 
   Return $Results
 }
@@ -245,24 +199,6 @@ function Update-ReleaseResources()
   Param(
     [ValidateNotNullOrEmpty()]
     [Parameter(Mandatory=$true)]
-    [string]$Url,
-
-    [ValidateNotNullOrEmpty()]
-    [Parameter(Mandatory=$true)]
-    [string]$Collection,
-
-    [ValidateNotNullOrEmpty()]
-    [Parameter(Mandatory=$true)]
-    [string]$Project,
-
-    [psobject]$Headers = @{},
-
-    [string]$PAT,
-
-    [switch]$UseDefaultCredentials,
-
-    [ValidateNotNullOrEmpty()]
-    [Parameter(Mandatory=$true)]
     [int]$ReleaseId,
 
     [ValidateNotNullOrEmpty()]
@@ -271,23 +207,18 @@ function Update-ReleaseResources()
     [string]$Body
   )
 
-  Write-Debug ("Url: {0}" -f $Url)
-  Write-Debug ("Collection: {0}" -f $Collection)
-  Write-Debug ("Project: {0}" -f $Project)
-  Write-Debug ("Headers Length: {0}" -f $Headers.Length)
-  Write-Debug ("PAT Length: {0}" -f $PAT.Length)
-  Write-Debug ("UseDefaultCredentials: {0}" -f $UseDefaultCredentials)
+  Write-Debug ("ReleaseId: {0}" -f $ReleaseId)
+  Write-Debug ("Body: {0}" -f $Body)
 
-  [psobject]$Headers = Set-AuthorizationHeader -Password $PAT -Headers $Headers
+  [psobject]$AzDO = Get-ConnectionInfo
 
   [psobject[]]$Results = @()
 
-  [string]$Uri = "{0}/{1}/{2}/_apis/release/releases/{3}?api-version=5.0-preview" -f $Url,$Collection,$Project,$ReleaseId
+  [string]$Uri = "{0}/{1}/{2}/_apis/release/releases/{3}?api-version=5.0-preview" -f $AzDO.BaseUrl,$AzDO.Collection,$AzDO.Project,$ReleaseId
 
   Write-Verbose ("Uri: {0}" -f $Uri)
-  Write-Verbose ("Body: {0}" -f $Body)
   
-  $Results = Invoke-RestMethod -Uri $Uri -Headers $Headers -Method PATCH -ContentType "application/json" -Body ([System.Text.Encoding]::UTF8.GetBytes($Body)) -UseDefaultCredentials:$UseDefaultCredentials -UseBasicParsing
+  $Results = Invoke-RestMethod -Uri $Uri -Headers $AzDO.Headers -Method PATCH -ContentType "application/json" -Body ([System.Text.Encoding]::UTF8.GetBytes($Body)) -UseBasicParsing
 
   Return $Results
 }
@@ -296,24 +227,6 @@ function Update-ReleaseEnvironment()
 {
   [CmdletBinding()]
   Param(
-    [ValidateNotNullOrEmpty()]
-    [Parameter(Mandatory=$true)]
-    [string]$Url,
-
-    [ValidateNotNullOrEmpty()]
-    [Parameter(Mandatory=$true)]
-    [string]$Collection,
-
-    [ValidateNotNullOrEmpty()]
-    [Parameter(Mandatory=$true)]
-    [string]$Project,
-
-    [psobject]$Headers = @{},
-
-    [string]$PAT,
-
-    [switch]$UseDefaultCredentials,
-
     [ValidateNotNullOrEmpty()]
     [Parameter(Mandatory=$true)]
     [int]$ReleaseId,
@@ -328,24 +241,19 @@ function Update-ReleaseEnvironment()
     [string]$Body
   )
 
-  Write-Debug ("Url: {0}" -f $Url)
-  Write-Debug ("Collection: {0}" -f $Collection)
-  Write-Debug ("Project: {0}" -f $Project)
-  Write-Debug ("Headers Length: {0}" -f $Headers.Length)
-  Write-Debug ("PAT Length: {0}" -f $PAT.Length)
-  Write-Debug ("UseDefaultCredentials: {0}" -f $UseDefaultCredentials)
+  Write-Debug ("ReleaseId: {0}" -f $ReleaseId)
+  Write-Debug ("EnvironmentId: {0}" -f $EnvironmentId)
+  Write-Debug ("Body: {0}" -f $Body)
 
-  [psobject]$Headers = Set-AuthorizationHeader -Password $PAT -Headers $Headers
+  [psobject]$AzDO = Get-ConnectionInfo
 
   [psobject[]]$Results = @()
 
-  [string]$Uri = "{0}/{1}/{2}/_apis/release/releases/{3}/environments/{4}?api-version=5.0-preview" -f $Url,$Collection,$Project,$ReleaseId,$EnvironmentId
+  [string]$Uri = "{0}/{1}/{2}/_apis/release/releases/{3}/environments/{4}?api-version=5.0-preview" -f $AzDO.BaseUrl,$AzDO.Collection,$AzDO.Project,$ReleaseId,$EnvironmentId
 
   Write-Verbose ("Uri: {0}" -f $Uri)
-  Write-Verbose ("Body: {0}" -f $Body)
-  Write-Verbose ("ErrorActionPreference: {0}" -f $ErrorActionPreference)
-  
-  $Results = Invoke-RestMethod -Uri $Uri -Headers $Headers -Method PATCH -ContentType "application/json" -Body ([System.Text.Encoding]::UTF8.GetBytes($Body)) -UseDefaultCredentials:$UseDefaultCredentials -UseBasicParsing
+
+  $Results = Invoke-RestMethod -Uri $Uri -Headers $AzDO.Headers -Method PATCH -ContentType "application/json" -Body ([System.Text.Encoding]::UTF8.GetBytes($Body)) -UseBasicParsing
 
   Return $Results
 }

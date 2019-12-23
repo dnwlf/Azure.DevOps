@@ -1,38 +1,15 @@
 function Get-Pools()
 {
-  [CmdletBinding()]
-  Param(
-    [ValidateNotNullOrEmpty()]
-    [Parameter(Mandatory=$true)]
-    [string]$Url,
-
-    [ValidateNotNullOrEmpty()]
-    [Parameter(Mandatory=$true)]
-    [string]$Collection,
-
-    [psobject]$Headers = @{},
-
-    [string]$PAT,
-
-    [switch]$UseDefaultCredentials
-  )
-
-  Write-Debug ("Url: {0}" -f $Url)
-  Write-Debug ("Collection: {0}" -f $Collection)
-  Write-Debug ("Headers Length: {0}" -f $Headers.Length)
-  Write-Debug ("PAT Length: {0}" -f $PAT.Length)
-  Write-Debug ("UseDefaultCredentials: {0}" -f $UseDefaultCredentials)
+  [psobject]$AzDO = Get-ConnectionInfo
 
   [psobject[]]$Pools = @{}
   [string]$ContinuationToken = ""
-
-  [psobject]$Headers = Set-AuthorizationHeader -Password $PAT -Headers $Headers
 
   do
   {
     [psobject[]]$Results = @()
 
-    [string]$Uri = "{0}/{1}/_apis/distributedtask/pools?api-version=5.0" -f $Url,$Collection
+    [string]$Uri = "{0}/{1}/_apis/distributedtask/pools?api-version=5.0" -f $AzDO.BaseUrl,$AzDO.Collection
 
     if($ContinuationToken)
     {
@@ -41,7 +18,7 @@ function Get-Pools()
     
     Write-Verbose ("Uri: {0}" -f $Uri)
 
-    $Results = Invoke-WebRequest -Uri $Uri -Headers $Headers -UseDefaultCredentials:$UseDefaultCredentials -UseBasicParsing
+    $Results = Invoke-WebRequest -Uri $Uri -Headers $AzDO.Headers -UseBasicParsing
     $ContinuationToken = $Results.Headers.'x-ms-continuationtoken'
     $Pools += ($Results.Content | ConvertFrom-Json).value
 
@@ -56,35 +33,17 @@ function Get-PoolAgent()
   Param(
     [ValidateNotNullOrEmpty()]
     [Parameter(Mandatory=$true)]
-    [string]$Url,
-
-    [ValidateNotNullOrEmpty()]
-    [Parameter(Mandatory=$true)]
-    [string]$Collection,
-
-    [psobject]$Headers = @{},
-
-    [string]$PAT,
-
-    [switch]$UseDefaultCredentials,
-
-    [ValidateNotNullOrEmpty()]
-    [Parameter(Mandatory=$true)]
     [Alias('id')]
     [int]$PoolId
   )
 
-  Write-Debug ("Url: {0}" -f $Url)
-  Write-Debug ("Collection: {0}" -f $Collection)
-  Write-Debug ("Headers Length: {0}" -f $Headers.Length)
-  Write-Debug ("PAT Length: {0}" -f $PAT.Length)
-  Write-Debug ("UseDefaultCredentials: {0}" -f $UseDefaultCredentials)
+  Write-Debug ("PoolId: {0}" -f $PoolId)
 
-  [psobject]$Headers = Set-AuthorizationHeader -Password $PAT -Headers $Headers
+  [psobject]$AzDO = Get-ConnectionInfo
 
-  [string]$Uri = "{0}/{1}/_apis/distributedtask/pools/{2}/agents?includeCapabilities=true&includeAssignedRequest=true&api-version=5.0" -f $Url,$Collection,$PoolId
+  [string]$Uri = "{0}/{1}/_apis/distributedtask/pools/{2}/agents?includeCapabilities=true&includeAssignedRequest=true&api-version=5.0" -f $AzDO.BaseUrl,$AzDO.Collection,$PoolId
 
-  [psobject]$Agents = Invoke-RestMethod -Uri $Uri -Headers $Headers -UseDefaultCredentials:$UseDefaultCredentials -UseBasicParsing
+  [psobject]$Agents = Invoke-RestMethod -Uri $Uri -Headers $AzDO.Headers -UseBasicParsing
 
   Return $Agents.value
 }

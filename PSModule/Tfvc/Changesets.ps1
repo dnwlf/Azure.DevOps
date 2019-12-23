@@ -2,24 +2,6 @@
 {
   [CmdletBinding()]
   Param(
-    [ValidateNotNullOrEmpty()]
-    [Parameter(Mandatory=$true)]
-    [string]$Url,
-
-    [ValidateNotNullOrEmpty()]
-    [Parameter(Mandatory=$true)]
-    [string]$Collection,
-
-    [ValidateNotNullOrEmpty()]
-    [Parameter(Mandatory=$true)]
-    [string]$Project,
-
-    [psobject]$Headers = @{},
-
-    [string]$PAT,
-
-    [switch]$UseDefaultCredentials,
-
     [string]$Author,
 
     [string]$ItemPath,
@@ -53,15 +35,24 @@
     [string]$OrderBy
   )
 
-  Write-Debug ("Url: {0}" -f $Url)
-  Write-Debug ("Collection: {0}" -f $Collection)
-  Write-Debug ("Headers Length: {0}" -f $Headers.Length)
-  Write-Debug ("PAT Length: {0}" -f $PAT.Length)
-  Write-Debug ("UseDefaultCredentials: {0}" -f $UseDefaultCredentials)
+  Write-Debug ("Author: {0}" -f $Author)
+  Write-Debug ("ItemPath: {0}" -f $ItemPath)
+  Write-Debug ("FromDate: {0}" -f $FromDate)
+  Write-Debug ("ToDate: {0}" -f $ToDate)
+  Write-Debug ("FromId: {0}" -f $FromId)
+  Write-Debug ("ToId: {0}" -f $ToId)
+  Write-Debug ("FollowRenames: {0}" -f $FollowRenames)
+  Write-Debug ("IncludeLinks: {0}" -f $IncludeLinks)
+  Write-Debug ("IncludeSourceRename: {0}" -f $IncludeSourceRename)
+  Write-Debug ("MaxCommentLength: {0}" -f $MaxCommentLength)
+  Write-Debug ("IncludeWorkItems: {0}" -f $IncludeWorkItems)
+  Write-Debug ("IncludeDetails: {0}" -f $IncludeDetails)
+  Write-Debug ("MaxChangeCount: {0}" -f $MaxChangeCount)
+  Write-Debug ("OrderBy: {0}" -f $OrderBy)
+
+  [psobject]$AzDO = Get-ConnectionInfo
 
   [psobject[]]$Changesets = @{}
-
-  [psobject]$Headers = Set-AuthorizationHeader -Password $PAT -Headers $Headers
 
   [bool]$Continue = $true
   [int]$Counter = 0
@@ -73,7 +64,7 @@
 
     [psobject[]]$Results = @()
 
-    [string]$Uri = "{0}/{1}/{2}/_apis/tfvc/changesets?api-version=5.0&`$top=100" -f $Url,$Collection,$Project
+    [string]$Uri = "{0}/{1}/{2}/_apis/tfvc/changesets?api-version=5.0&`$top=100" -f $AzDO.BaseUrl,$AzDO.Collection,$AzDO.Project
 
     if($i -gt 0)            {$Uri += "&`$skip={0}" -f ($i*100)}
     if($Author)             {$Uri += "&searchCriteria.author={0}" -f $Author}
@@ -93,7 +84,7 @@
 
     Write-Verbose ("Uri: {0}" -f $Uri)
     
-    $Results = Invoke-RestMethod -Uri $Uri -Headers $Headers -UseDefaultCredentials:$UseDefaultCredentials -UseBasicParsing
+    $Results = Invoke-RestMethod -Uri $Uri -Headers $AzDO.Headers -UseBasicParsing
 
     if($Results[0].Count -gt 0)
     {

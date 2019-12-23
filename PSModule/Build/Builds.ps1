@@ -2,24 +2,6 @@
 {
   [CmdletBinding()]
   Param(
-    [ValidateNotNullOrEmpty()]
-    [Parameter(Mandatory=$true)]
-    [string]$Url,
-
-    [ValidateNotNullOrEmpty()]
-    [Parameter(Mandatory=$true)]
-    [string]$Collection,
-
-    [ValidateNotNullOrEmpty()]
-    [Parameter(Mandatory=$true)]
-    [string]$Project,
-
-    [psobject]$Headers = @{},
-
-    [string]$PAT,
-
-    [switch]$UseDefaultCredentials,
-
     [int[]]$Definitions,
 
     [int[]]$Queues,
@@ -66,23 +48,36 @@
     [string]$RepositoryType
   )
 
-  Write-Debug ("Url: {0}" -f $Url)
-  Write-Debug ("Collection: {0}" -f $Collection)
-  Write-Debug ("Project: {0}" -f $Project)
-  Write-Debug ("Headers Length: {0}" -f $Headers.Length)
-  Write-Debug ("PAT Length: {0}" -f $PAT.Length)
-  Write-Debug ("UseDefaultCredentials: {0}" -f $UseDefaultCredentials)
+  Write-Debug ("Definitions: {0}" -f ($Definitions -join ","))
+  Write-Debug ("Queues: {0}" -f ($Queues -join ","))
+  Write-Debug ("BuildNumber: {0}" -f $BuildNumber)
+  Write-Debug ("MinTime: {0}" -f $MinTime)
+  Write-Debug ("MaxTime: {0}" -f $MaxTime)
+  Write-Debug ("RequestedFor: {0}" -f $RequestedFor)
+  Write-Debug ("ReasonFilter: {0}" -f ($ReasonFilter -join ","))
+  Write-Debug ("StatusFilter: {0}" -f ($StatusFilter -join ","))
+  Write-Debug ("ResultFilter: {0}" -f ($ResultFilter -join ","))
+  Write-Debug ("TagFilters: {0}" -f ($TagFilters -join ","))
+  Write-Debug ("Properties: {0}" -f ($Properties -join ","))
+  Write-Debug ("Top: {0}" -f $Top)
+  Write-Debug ("MaxBuildsPerDefinition: {0}" -f $MaxBuildsPerDefinition)
+  Write-Debug ("DeletedFilter: {0}" -f ($DeletedFilter -join ","))
+  Write-Debug ("QueryOrder: {0}" -f $QueryOrder)
+  Write-Debug ("BranchName: {0}" -f $BranchName)
+  Write-Debug ("BuildIds: {0}" -f ($BuildIds -join ","))
+  Write-Debug ("RepositoryId: {0}" -f $RepositoryId)
+  Write-Debug ("RepositoryType: {0}" -f $RepositoryType)
+
+  [psobject]$AzDO = Get-ConnectionInfo
 
   [psobject[]]$Builds = @{}
   [string]$ContinuationToken = ""
-
-  [psobject]$Headers = Set-AuthorizationHeader -Password $PAT -Headers $Headers
 
   do
   {
     [psobject[]]$Results = @()
 
-    [string]$Uri = "{0}/{1}/{2}/_apis/build/builds?api-version=5.0" -f $Url,$Collection,$Project
+    [string]$Uri = "{0}/{1}/{2}/_apis/build/builds?api-version=5.0" -f $AzDO.BaseUrl,$AzDO.Collection,$AzDO.Project
     
     if($Definitions)            {$Uri += "&definitions=$Definitions"}
     if($Queues)                 {$Uri += "&queues=$Queues"}
@@ -111,38 +106,22 @@
     
     Write-Verbose ("Uri: {0}" -f $Uri)
 
-    $Results = Invoke-WebRequest -Uri $Uri -Headers $Headers -UseDefaultCredentials:$UseDefaultCredentials -UseBasicParsing
+    $Results = Invoke-WebRequest -Uri $Uri -Headers $AzDO.Headers -UseBasicParsing
     $ContinuationToken = $Results.Headers.'x-ms-continuationtoken'
     $Builds += ($Results.Content | ConvertFrom-Json).value
 
   }while($ContinuationToken)
 
-  Return $Builds
+  Return ($Builds | Where {$_.id})
 }
 
 function Get-Build()
 {
   [CmdletBinding()]
   Param(
-    [ValidateNotNullOrEmpty()]
-    [Parameter(Mandatory=$true)]
-    [string]$Url,
-
-    [ValidateNotNullOrEmpty()]
-    [Parameter(Mandatory=$true)]
-    [string]$Collection,
-
-    [ValidateNotNullOrEmpty()]
-    [Parameter(Mandatory=$true)]
-    [string]$Project,
-
-    [psobject]$Headers = @{},
-
-    [string]$PAT,
-
-    [switch]$UseDefaultCredentials,
-
-    [Parameter(Mandatory=$true,ValueFromPipelineByPropertyName=$true,ValueFromPipeline=$true)]
+    [Parameter(Mandatory=$true,
+               ValueFromPipelineByPropertyName=$true,
+               ValueFromPipeline=$true)]
     [ValidateNotNullOrEmpty()]
     [Alias('id')]
     [int]$BuildId,
@@ -150,24 +129,20 @@ function Get-Build()
     [string]$PropertyFilters
   )
 
-  Write-Debug ("Url: {0}" -f $Url)
-  Write-Debug ("Collection: {0}" -f $Collection)
-  Write-Debug ("Project: {0}" -f $Project)
-  Write-Debug ("Headers Length: {0}" -f $Headers.Length)
-  Write-Debug ("PAT Length: {0}" -f $PAT.Length)
-  Write-Debug ("UseDefaultCredentials: {0}" -f $UseDefaultCredentials)
+  Write-Debug ("BuildId: {0}" -f $BuildId)
+  Write-Debug ("PropertyFilters: {0}" -f $PropertyFilters)
 
-  [psobject]$Headers = Set-AuthorizationHeader -Password $PAT -Headers $Headers
+  [psobject]$AzDO = Get-ConnectionInfo
 
   [psobject[]]$Results = @()
 
-  [string]$Uri = "{0}/{1}/{2}/_apis/build/builds/{3}?api-version=5.0" -f $Url,$Collection,$Project,$BuildId
+  [string]$Uri = "{0}/{1}/{2}/_apis/build/builds/{3}?api-version=5.0" -f $AzDO.BaseUrl,$AzDO.Collection,$AzDO.Project,$BuildId
 
   if($PropertyFilters) {$Uri += "&propertyFilters={0}" -f $PropertyFilters}
   
   Write-Verbose ("Uri: {0}" -f $Uri)
 
-  $Results = Invoke-RestMethod -Uri $Uri -Headers $Headers -UseDefaultCredentials:$UseDefaultCredentials -UseBasicParsing
+  $Results = Invoke-RestMethod -Uri $Uri -Headers $AzDO.Headers -UseBasicParsing
 
   Return $Results
 }
@@ -176,59 +151,37 @@ function Get-BuildLogs()
 {
   [CmdletBinding()]
   Param(
-    [ValidateNotNullOrEmpty()]
-    [Parameter(Mandatory=$true)]
-    [string]$Url,
-
-    [ValidateNotNullOrEmpty()]
-    [Parameter(Mandatory=$true)]
-    [string]$Collection,
-
-    [ValidateNotNullOrEmpty()]
-    [Parameter(Mandatory=$true)]
-    [string]$Project,
-
-    [ValidateNotNullOrEmpty()]
-    [ValidateSet('application/zip', 'application/json')]
-    [string]$AcceptType = 'application/json',
-
-    [ValidateNotNullOrEmpty()]
-    [string]$OutFile,
-
-    [psobject]$Headers = @{},
-
-    [string]$PAT,
-
-    [switch]$UseDefaultCredentials,
-
-    [Parameter(Mandatory=$true,ValueFromPipelineByPropertyName=$true,ValueFromPipeline=$true)]
+    [Parameter(Mandatory=$true,
+               ValueFromPipelineByPropertyName=$true,
+               ValueFromPipeline=$true)]
     [ValidateNotNullOrEmpty()]
     [Alias('id')]
-    [int]$BuildId
+    [int]$BuildId,
+
+    [ValidateNotNullOrEmpty()]
+    [ValidateSet('zip', 'json')]
+    [string]$Format = 'json',
+
+    [ValidateNotNullOrEmpty()]
+    [string]$OutFile
   )
+  
+  Write-Debug ("BuildId: {0}" -f $BuildId)
+  Write-Debug ("Format: {0}" -f $Format)
+  Write-Debug ("OutFile: {0}" -f $OutFile)
 
-  Write-Debug ("Url: {0}" -f $Url)
-  Write-Debug ("Collection: {0}" -f $Collection)
-  Write-Debug ("Project: {0}" -f $Project)
-  Write-Debug ("AcceptType: {0}" -f $AcceptType)
-  Write-Debug ("Headers Length: {0}" -f $Headers.Length)
-  Write-Debug ("PAT Length: {0}" -f $PAT.Length)
-  Write-Debug ("UseDefaultCredentials: {0}" -f $UseDefaultCredentials)
-
-  [psobject]$Headers = Set-AuthorizationHeader -Password $PAT -Headers $Headers
-  $Headers = Set-AcceptHeader -AcceptType $AcceptType -Headers $Headers
+  [psobject]$AzDO = Get-ConnectionInfo
 
   [psobject[]]$Results = @()
 
-  [string]$Uri = "{0}/{1}/{2}/_apis/build/builds/{3}/logs?api-version=5.0" -f $Url,$Collection,$Project,$BuildId
+  [string]$Uri = "{0}/{1}/{2}/_apis/build/builds/{3}/logs?`$format={4}&api-version=5.0" -f $AzDO.BaseUrl,$AzDO.Collection,$AzDO.Project,$BuildId,$Format
   
   Write-Verbose ("Uri: {0}" -f $Uri)
 
   $IrmParameters = @{
     Uri = $Uri
     Method = "Get"
-    Headers = $Headers
-    UseDefaultCredentials = $UseDefaultCredentials
+    Headers = $AzDO.Headers
   }
 
   if($OutFile)
@@ -247,33 +200,9 @@ function Get-BuildLog()
 {
   [CmdletBinding()]
   Param(
-    [ValidateNotNullOrEmpty()]
-    [Parameter(Mandatory=$true)]
-    [string]$Url,
-
-    [ValidateNotNullOrEmpty()]
-    [Parameter(Mandatory=$true)]
-    [string]$Collection,
-
-    [ValidateNotNullOrEmpty()]
-    [Parameter(Mandatory=$true)]
-    [string]$Project,
-
-    [ValidateNotNullOrEmpty()]
-    [Parameter(Mandatory=$true)]
-    [ValidateSet('application/zip', 'application/json','text/plain')]
-    [string]$AcceptType = 'application/json',
-
-    [ValidateNotNullOrEmpty()]
-    [string]$OutFile,
-
-    [psobject]$Headers = @{},
-
-    [string]$PAT,
-
-    [switch]$UseDefaultCredentials,
-
-    [Parameter(Mandatory=$true,ValueFromPipelineByPropertyName=$true,ValueFromPipeline=$true)]
+    [Parameter(Mandatory=$true,
+               ValueFromPipelineByPropertyName=$true,
+               ValueFromPipeline=$true)]
     [ValidateNotNullOrEmpty()]
     [Alias('id')]
     [int]$BuildId,
@@ -284,23 +213,28 @@ function Get-BuildLog()
 
     [int]$StartLine,
 
-    [int]$EndLine
+    [int]$EndLine,
+
+    [ValidateNotNullOrEmpty()]
+    [ValidateSet('zip', 'json')]
+    [string]$Format = 'json',
+
+    [ValidateNotNullOrEmpty()]
+    [string]$OutFile
   )
 
-  Write-Debug ("Url: {0}" -f $Url)
-  Write-Debug ("Collection: {0}" -f $Collection)
-  Write-Debug ("Project: {0}" -f $Project)
-  Write-Debug ("AcceptType: {0}" -f $AcceptType)
-  Write-Debug ("Headers Length: {0}" -f $Headers.Length)
-  Write-Debug ("PAT Length: {0}" -f $PAT.Length)
-  Write-Debug ("UseDefaultCredentials: {0}" -f $UseDefaultCredentials)
+  Write-Debug ("BuildId: {0}" -f $BuildId)
+  Write-Debug ("LogId: {0}" -f $LogId)
+  Write-Debug ("StartLine: {0}" -f $StartLine)
+  Write-Debug ("EndLine: {0}" -f $EndLine)
+  Write-Debug ("Format: {0}" -f $Format)
+  Write-Debug ("OutFile: {0}" -f $OutFile)
 
-  [psobject]$Headers = Set-AuthorizationHeader -Password $PAT -Headers $Headers
-  $Headers = Set-AcceptHeader -AcceptType $AcceptType -Headers $Headers
+  [psobject]$AzDO = Get-ConnectionInfo
 
   [psobject[]]$Results = @()
 
-  [string]$Uri = "{0}/{1}/{2}/_apis/build/builds/{3}/logs/{4}?api-version=5.0" -f $Url,$Collection,$Project,$BuildId,$LogId
+  [string]$Uri = "{0}/{1}/{2}/_apis/build/builds/{3}/logs/{4}?`$format={5}&api-version=5.0" -f $AzDO.BaseUrl,$AzDO.Collection,$AzDO.Project,$BuildId,$LogId,$Format
   
   if($StartLine) {$Uri += "&startLine={0}" -f $StartLine}
   if($EndLine)   {$Uri += "&endLine={0}" -f $EndLine}
@@ -310,8 +244,7 @@ function Get-BuildLog()
   $IrmParameters = @{
     Uri = $Uri
     Method = "Get"
-    Headers = $Headers
-    UseDefaultCredentials = $UseDefaultCredentials
+    Headers = $AzDO.Headers
   }
 
   if($OutFile)
@@ -320,8 +253,6 @@ function Get-BuildLog()
       OutFile = $OutFile
     }
   }
-
-  Write-Host @IrmParameters
 
   $Results = Invoke-RestMethod @IrmParameters
 
@@ -332,46 +263,25 @@ function Remove-Build()
 {
   [CmdletBinding()]
   Param(
-    [ValidateNotNullOrEmpty()]
-    [Parameter(Mandatory=$true)]
-    [string]$Url,
-
-    [ValidateNotNullOrEmpty()]
-    [Parameter(Mandatory=$true)]
-    [string]$Collection,
-
-    [ValidateNotNullOrEmpty()]
-    [Parameter(Mandatory=$true)]
-    [string]$Project,
-
-    [psobject]$Headers = @{},
-
-    [string]$PAT,
-
-    [switch]$UseDefaultCredentials,
-
-    [Parameter(Mandatory=$true,ValueFromPipelineByPropertyName=$true,ValueFromPipeline=$true)]
+    [Parameter(Mandatory=$true,
+               ValueFromPipelineByPropertyName=$true,
+               ValueFromPipeline=$true)]
     [ValidateNotNullOrEmpty()]
     [Alias('id')]
     [int]$BuildId
   )
 
-  Write-Debug ("Url: {0}" -f $Url)
-  Write-Debug ("Collection: {0}" -f $Collection)
-  Write-Debug ("Project: {0}" -f $Project)
-  Write-Debug ("Headers Length: {0}" -f $Headers.Length)
-  Write-Debug ("PAT Length: {0}" -f $PAT.Length)
-  Write-Debug ("UseDefaultCredentials: {0}" -f $UseDefaultCredentials)
+  Write-Debug ("BuildId: {0}" -f $BuildId)
 
-  [psobject]$Headers = Set-AuthorizationHeader -Password $PAT -Headers $Headers
+  [psobject]$AzDO = Get-ConnectionInfo
 
   [psobject[]]$Results = @()
 
-  [string]$Uri = "{0}/{1}/{2}/_apis/build/builds/{3}?api-version=5.0" -f $Url,$Collection,$Project,$BuildId
+  [string]$Uri = "{0}/{1}/{2}/_apis/build/builds/{3}?api-version=5.0" -f $AzDO.BaseUrl,$AzDO.Collection,$AzDO.Project,$BuildId
   
   Write-Verbose ("Uri: {0}" -f $Uri)
 
-  $Results = Invoke-RestMethod -Uri $Uri -Method Delete -Headers $Headers -UseDefaultCredentials:$UseDefaultCredentials -UseBasicParsing
+  $Results = Invoke-RestMethod -Uri $Uri -Method Delete -Headers $AzDO.Headers -UseBasicParsing
 
   Return $Results
 }

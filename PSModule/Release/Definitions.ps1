@@ -2,24 +2,6 @@
 {
   [CmdletBinding()]
   Param(
-    [ValidateNotNullOrEmpty()]
-    [Parameter(Mandatory=$true)]
-    [string]$Url,
-
-    [ValidateNotNullOrEmpty()]
-    [Parameter(Mandatory=$true)]
-    [string]$Collection,
-
-    [ValidateNotNullOrEmpty()]
-    [Parameter(Mandatory=$true)]
-    [string]$Project,
-
-    [psobject]$Headers = @{},
-
-    [string]$PAT,
-
-    [switch]$UseDefaultCredentials,
-
     [string]$SearchText,
 
     [string]$CreatedBy,
@@ -50,23 +32,30 @@
     [bool]$IsDeleted
   )
 
-  Write-Debug ("Url: {0}" -f $Url)
-  Write-Debug ("Collection: {0}" -f $Collection)
-  Write-Debug ("Project: {0}" -f $Project)
-  Write-Debug ("Headers Length: {0}" -f $Headers.Length)
-  Write-Debug ("PAT Length: {0}" -f $PAT.Length)
-  Write-Debug ("UseDefaultCredentials: {0}" -f $UseDefaultCredentials)
+  Write-Debug ("SearchText: {0}" -f $SearchText)
+  Write-Debug ("CreatedBy: {0}" -f $CreatedBy)
+  Write-Debug ("Expand: {0}" -f ($Expand -join ","))
+  Write-Debug ("ArtifactType: {0}" -f $ArtifactType)
+  Write-Debug ("ArtifactSourceId: {0}" -f $ArtifactSourceId)
+  Write-Debug ("Top: {0}" -f $Top)
+  Write-Debug ("QueryOrder: {0}" -f $QueryOrder)
+  Write-Debug ("Path: {0}" -f $Path)
+  Write-Debug ("IsExactNameMatch: {0}" -f $IsExactNameMatch)
+  Write-Debug ("TagFilter: {0}" -f ($TagFilter -join ","))
+  Write-Debug ("PropertyFilters: {0}" -f ($PropertyFilters -join ","))
+  Write-Debug ("DefinitionIdFilter: {0}" -f ($DefinitionIdFilter -join ","))
+  Write-Debug ("IsDeleted: {0}" -f $IsDeleted)
+
+  [psobject]$AzDO = Get-ConnectionInfo
 
   [psobject[]]$Definitions = @{}
   [string]$ContinuationToken = ""
-
-  [psobject]$Headers = Set-AuthorizationHeader -Password $PAT -Headers $Headers
 
   do
   {
     [psobject[]]$Results = @()
 
-    [string]$Uri = "{0}/{1}/{2}/_apis/release/definitions?api-version=5.0" -f $Url,$Collection,$Project
+    [string]$Uri = "{0}/{1}/{2}/_apis/release/definitions?api-version=5.0" -f $AzDO.BaseUrl,$AzDO.Collection,$AzDO.Project
 
     if($SearchText)         {$Uri += "&searchText=$SearchText"}
     if($CreatedBy)          {$Uri += "&createdBy=$CreatedBy"}
@@ -89,11 +78,72 @@
     
     Write-Verbose ("Uri: {0}" -f $Uri)
 
-    $Results = Invoke-WebRequest -Uri $Uri -Headers $Headers -UseDefaultCredentials:$UseDefaultCredentials -UseBasicParsing
+    $Results = Invoke-WebRequest -Uri $Uri -Headers $AzDO.Headers -UseBasicParsing
     $ContinuationToken = $Results.Headers.'x-ms-continuationtoken'
     $Definitions += ($Results.Content | ConvertFrom-Json).value
 
   }while($ContinuationToken)
 
   Return $Definitions
+}
+
+function Get-ReleaseDefinition()
+{
+  [CmdletBinding()]
+  Param(
+    [ValidateNotNullOrEmpty()]
+    [Parameter(Mandatory=$true)]
+    [Alias('id')]
+    [int]$DefinitionId,
+
+    [string[]]$PropertyFilters
+  )
+
+  Write-Debug ("DefinitionId: {0}" -f $DefinitionId)
+  Write-Debug ("PropertyFilters: {0}" -f ($PropertyFilters -join ","))
+
+  [psobject]$AzDO = Get-ConnectionInfo
+
+  [psobject[]]$Definition = @{}
+
+  [string]$Uri = "{0}/{1}/{2}/_apis/release/definitions/{3}?api-version=5.0" -f $AzDO.BaseUrl,$AzDO.Collection,$AzDO.Project,$DefinitionId
+
+  if($PropertyFilters) {$Uri += "&propertyFilters={0}" -f ($PropertyFilters -join ",")}
+    
+  Write-Verbose ("Uri: {0}" -f $Uri)
+
+  $Definition = Invoke-RestMethod -Uri $Uri -Headers $AzDO.Headers -UseBasicParsing
+
+  Return $Definition
+}
+
+function Update-ReleaseDefinition()
+{
+  [CmdletBinding()]
+  Param(
+    [ValidateNotNullOrEmpty()]
+    [Parameter(Mandatory=$true)]
+    [Alias('id')]
+    [int]$DefinitionId,
+
+    [ValidateNotNullOrEmpty()]
+    [Parameter(Mandatory=$true)]
+    [ValidateScript({ConvertTo-Json $_})]
+    [psobject]$Definition
+  )
+
+  [string]$Body = $Definition | ConvertTo-Json -Depth 100
+
+  Write-Debug ("DefinitionId: {0}" -f $DefinitionId)
+  Write-Debug ("Body: {0}" -f $Body)
+
+  [psobject]$AzDO = Get-ConnectionInfo
+
+  [string]$Uri = "{0}/{1}/{2}/_apis/release/definitions/{3}?api-version=5.0" -f $AzDO.BaseUrl,$AzDO.Collection,$AzDO.Project,$DefinitionId
+
+  Write-Verbose ("Uri: {0}" -f $Uri)
+
+  $Results = Invoke-RestMethod -Uri $Uri -Headers $AzDO.Headers -Method PUT -ContentType "application/json" -Body ([System.Text.Encoding]::UTF8.GetBytes($Body)) -UseBasicParsing
+
+  Return $Results
 }
