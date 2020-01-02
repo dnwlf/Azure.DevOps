@@ -6,6 +6,7 @@
 
     [string]$RepositoryId,
 
+    [ValidateSet('TfsGit','TfsVersionControl','GitHub','GitHubEnterprise','svn','Git','Bitbucket')]
     [string]$RepositoryType,
 
     [ValidateSet('definitionNameAscending','definitionNameDescending','lastModifiedAscending','lastModifiedDescending','none')]

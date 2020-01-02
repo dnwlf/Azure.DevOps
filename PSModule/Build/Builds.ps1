@@ -45,6 +45,7 @@
 
     [string]$RepositoryId,
 
+    [ValidateSet('TfsGit','TfsVersionControl','GitHub','GitHubEnterprise','svn','Git','Bitbucket')]
     [string]$RepositoryType
   )
 
