@@ -72,11 +72,13 @@ NestedModules = @('Build\Artifacts.ps1',
                   'Core\ProjectCollections.ps1',
                   'Core\Projects.ps1',
                   'DistributedTask\Pools.ps1',
-                  'Release\Definitions.ps1',
-                  'Release\Releases.ps1',
                   'Git\Commits.ps1',
                   'Git\Repositories.ps1',
-                  'Tfvc\Changesets.ps1')
+                  'Release\Definitions.ps1',
+                  'Release\Releases.ps1',
+                  'Tfvc\Changesets.ps1',
+                  'WorkItemTracking\WorkItems.ps1'
+                )
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
 FunctionsToExport = @('Add-BuildFolder',
@@ -86,6 +88,7 @@ FunctionsToExport = @('Add-BuildFolder',
                       'Find-BuildDefinition',
                       'Find-Release',
                       'Find-ReleaseDefinition',
+                      'Find-WorkItem',
                       'Find-CommitBatch',
                       'Find-Repository',
                       'Get-Build',
