@@ -114,7 +114,7 @@
     $ContinuationToken = $Results.Headers.'x-ms-continuationtoken'
     $Releases += ($Results.Content | ConvertFrom-Json).value
 
-  }while($ContinuationToken)
+  }while(-not $Top -and $ContinuationToken)
 
   Return $Releases
 }

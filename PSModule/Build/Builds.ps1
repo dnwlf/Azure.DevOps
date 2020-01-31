@@ -111,7 +111,7 @@
     $ContinuationToken = $Results.Headers.'x-ms-continuationtoken'
     $Builds += ($Results.Content | ConvertFrom-Json).value
 
-  }while($ContinuationToken)
+  }while(-not $Top -and $ContinuationToken)
 
   Return ($Builds | Where {$_.id})
 }

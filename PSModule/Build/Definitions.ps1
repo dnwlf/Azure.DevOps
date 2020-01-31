@@ -96,7 +96,7 @@
     $ContinuationToken = $Results.Headers.'x-ms-continuationtoken'
     $Definitions += ($Results.Content | ConvertFrom-Json).value
 
-  }while($ContinuationToken)
+  }while(-not $Top -and $ContinuationToken)
 
   Return $Definitions
 }
